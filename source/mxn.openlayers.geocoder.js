@@ -42,9 +42,13 @@ Geocoder: {
 	},
 
 	geocode_callback: function(results, rowlimit) {
-		if (results instanceof Array && !results.length) {
-			this.error_callback("Nominatim didn't recognize this address.");
-			return;
+		if (results instanceof Array) {
+			if (!results.length) {
+				this.error_callback("Nominatim didn't recognize this address.");
+				return;
+			}
+		} else {
+			var results = [results];
 		}
 
 		var place;
