@@ -24,6 +24,7 @@ Geocoder: {
 				address.address = [ address.street, address.locality, address.region, address.country ].join(', ');
 			}
 			params.q = address.address;
+			params.limit = me.row_limit;
 		}
 
 		OpenLayers.Request.GET({
