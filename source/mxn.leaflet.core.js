@@ -9,6 +9,8 @@ Mapstraction: {
 
 		var me = this;
 		var map = new L.Map(element.id, {
+			panControl: false,
+			zoomsliderControl: false,
 			zoomControl: false
 		});
 		map.addEventListener('moveend', function(){
@@ -62,17 +64,20 @@ Mapstraction: {
 		this.road_tile = {
 			name: 'Roads',
 			attribution: 'Tiles Courtesy of <a href="http://www.mapquest.com/" target="_blank">MapQuest</a> <img src="http://developer.mapquest.com/content/osm/mq_logo.png">',
-			url: 'http://otile{s}.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg'
+			url: 'http://otile{s}.mqcdn.com/tiles/1.0.0/map/{z}/{x}/{y}.jpg',
+			subdomains: [1, 2, 3, 4],
+			min_zoom: 0, max_zoom: 18
 		};
 		this.satellite_tile = {
 			name: 'Satellite',
 			attribution: 'Portions Courtesy NASA/JPL-Caltech and U.S. Depart. of Agriculture, Farm Service Agency',
-			url: 'http://otile{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.jpg'
+			url: 'http://otile{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.jpg',
+			subdomains: [1, 2, 3, 4],
+			min_zoom: 0, max_zoom: 18
 		};
 		
-		var subdomains = [1, 2, 3, 4];
-		this.addTileLayer (this.satellite_tile.url, 1.0, this.satellite_tile.name, this.satellite_tile.attribution, 0, 18, true, subdomains);
-		this.addTileLayer (this.road_tile.url, 1.0, this.road_tile.name, this.road_tile.attribution, 0, 18, true, subdomains);
+		this.addTileLayer (this.satellite_tile.url, 1.0, this.satellite_tile.name, this.satellite_tile.attribution, this.satellite_tile.min_zoom, this.satellite_tile.max_zoom, true, this.satellite_tile.subdomains);
+		this.addTileLayer (this.road_tile.url, 1.0, this.road_tile.name, this.road_tile.attribution, this.road_tile.min_zoom, this.road_tile.max_zoom, true, this.road_tile.subdomains);
 
 		this.currentMapType = mxn.Mapstraction.ROAD;
 
@@ -106,8 +111,23 @@ Mapstraction: {
 
 		var map = this.maps[this.api];
 
-		if ('zoom' in args || ('pan' in args && args.pan)) {
-			if (args.pan || args.zoom || args.zoom == 'large' || args.zoom == 'small') {
+		if ('pan' in args && args.pan) {
+			if ((this.controls.pan === null) && L.Control.Pan) {
+				this.controls.pan = new L.Control.Pan();
+				map.addControl(this.controls.pan);
+			}
+		}
+		else {
+			if (this.controls.pan !== null) {
+				map.removeControl(this.controls.pan);
+				this.controls.pan = null;
+			}
+		}
+
+		if ('zoom' in args && args.zoom) {
+			if (args.zoom == 'large') {
+				this.addLargeControls();
+			} else if (args.zoom || args.zoom == 'small') {
 				this.addSmallControls();
 			}
 		}
@@ -140,19 +160,62 @@ Mapstraction: {
 				this.controls.map_type = null;
 			}
 		}
+
+		if ('overview' in args && args.overview) {
+			if (L.Control.MiniMap) {
+				// WARNING
+				// Hack to fix L.Control.MiniMap working with L.Control.Pan and L.Control.Zoomslider,
+				// see https://github.com/Norkart/Leaflet-MiniMap/issues/11
+				L.Map.mergeOptions({
+					panControl: false,
+					zoomsliderControl: false
+				});
+
+				if (typeof(args.overview) != 'number') {
+					args.overview = 5;
+				}
+				var miniMap = new L.TileLayer(this.road_tile.url, {
+					minZoom: 0, maxZoom: this.road_tile.max_zoom - args.overview,
+					attribution: this.road_tile.attribution,
+					subdomains: this.road_tile.subdomains
+				});
+				this.controls.overview = new L.Control.MiniMap(miniMap, {
+					toggleDisplay: true,
+					zoomLevelOffset: -args.overview
+				});
+				if (map._loaded) {
+					map.addControl(this.controls.overview);
+				} else {
+					var overviewControl = this.controls.overview;
+					map.on('load', function() {
+						map.addControl(overviewControl);
+					});
+				}
+			}
+		} else {
+			if (this.controls.overview !== null) {
+				map.removeControl(this.controls.overview);
+				this.controls.overview = null;
+			}
+		}
 	},
 
 	addSmallControls: function() {
 		var map = this.maps[this.api];
-		
-		if (this.controls.zoom === null) {
-			this.controls.zoom = new L.Control.Zoom();
-			map.addControl(this.controls.zoom);
+		if (this.controls.zoom !== null) {
+			map.removeControl(this.controls.zoom);
 		}
+		this.controls.zoom = new L.Control.Zoom();
+		map.addControl(this.controls.zoom);
 	},
 
 	addLargeControls: function() {
-		return this.addSmallControls();
+		var map = this.maps[this.api];
+		if (this.controls.zoom !== null) {
+			map.removeControl(this.controls.zoom);
+		}
+		this.controls.zoom = L.Control.Zoomslider ? new L.Control.Zoomslider() : new L.Control.Zoom();
+		map.addControl(this.controls.zoom);
 	},
 
 	addMapTypeControls: function() {
