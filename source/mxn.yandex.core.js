@@ -93,11 +93,10 @@ Mapstraction: {
 		}
 
 		if ('zoom' in args) {
-			if (args.zoom || args.zoom == 'small') {
+			if (args.zoom == 'small') {
 				this.addSmallControls();
 			}
-			
-			else if (args.zoom == 'large') {
+			else if (args.zoom || args.zoom == 'large') {
 				this.addLargeControls();
 			}
 		}
@@ -372,7 +371,7 @@ Mapstraction: {
 			var layerID = Math.round(Math.random()*Date.now()).toString(); // silly hash function
 			YMaps.Layers.add(layerID, newLayer);
 			var newType = new YMaps.MapType([layerID],
-				copyright_text,
+				attribution,
 				{ 
 					textColor: "#706f60",
 					minZoom:   min_zoom,
