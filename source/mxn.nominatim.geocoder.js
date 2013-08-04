@@ -73,13 +73,17 @@ Geocoder: {
 		} else {
 			try {
 				var query = '';
-				for (var key in params)
-					query += (query ? '&' : '?') + encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+				for (var key in params) {
+					if (params.hasOwnProperty(key)) {
+						query += (query ? '&' : '?') + encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+					}
+				}
 				var xhr = new XMLHttpRequest() || new ActiveXObject('Microsoft.XMLHTTP');
 				xhr.open('GET', url + query, true);
 				xhr.onreadystatechange = function() {
-					if (xhr.readyState == 4)
+					if (xhr.readyState == 4) {
 						handlers.response(xhr);
+					}
 				};
 				xhr.send(params);
 			} catch (e) {
