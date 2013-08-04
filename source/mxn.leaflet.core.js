@@ -202,16 +202,18 @@ Mapstraction: {
 
 	addSmallControls: function() {
 		var map = this.maps[this.api];
-		if (this.controls.zoom !== null)
+		if (this.controls.zoom !== null) {
 			map.removeControl(this.controls.zoom);
+		}
 		this.controls.zoom = new L.Control.Zoom();
 		map.addControl(this.controls.zoom);
 	},
 
 	addLargeControls: function() {
 		var map = this.maps[this.api];
-		if (this.controls.zoom !== null)
+		if (this.controls.zoom !== null) {
 			map.removeControl(this.controls.zoom);
+		}
 		this.controls.zoom = L.Control.Zoomslider ? new L.Control.Zoomslider() : new L.Control.Zoom();
 		map.addControl(this.controls.zoom);
 	},
